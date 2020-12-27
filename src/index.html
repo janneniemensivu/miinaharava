@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" src="css/style.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <h1>Miinaharava</h1>
+    <table id="gametable"></table>
+    <div id="control"></div>
+
+    <script>
+      let gameId
+      let size = 10
+      let mineCount = 20
+
+      function startGame() {
+        let data = { size: size, mineCount: mineCount }
+        $.get("/", data, function (data, status) {
+          gameId = data.gameId
+          document.getElementById("gametable").innerHTML = ""
+          drawGameTable()
+          addEventListeners(data.gameBoard)
+          drawGameBoard(data.gameBoard, false)
+        })
+      }
+
+      function addEventListeners(gameBoard) {
+        for (let i = 0; i < size; i++) {
+          for (let j = 0; j < size; j++) {
+            cell = document.getElementById(i + ":" + j)
+            cell.addEventListener("click", clickAction)
+          }
+        }
+      }
+
+      function drawGameBoard(gameBoard, won) {
+        for (let rowIndex = 0; rowIndex < size; rowIndex++) {
+          for (let colIndex = 0; colIndex < size; colIndex++) {
+            const square = document.getElementById(rowIndex + ":" + colIndex)
+
+            switch (gameBoard[rowIndex][colIndex]) {
+              case "empty":
+                square.innerHTML = ""
+                square.style.backgroundColor = "grey"
+                break
+
+              case "cleared":
+                square.style.backgroundColor = "white"
+                break
+
+              case "mine":
+                if (won) {
+                  square.innerHTML = "&#128163"
+                  square.style.color = "black"
+                  square.style.backgroundColor = "white"
+                } else square.style.backgroundColor = "grey"
+                break
+
+              default:
+                square.style.backgroundColor = "white"
+                square.innerHTML = gameBoard[rowIndex][colIndex]
+                break
+            }
+          }
+        }
+      }
+
+      function idIntoCoordinates(id) {
+        const indexArray = id.split(":")
+        return { rowIndex: indexArray[0], colIndex: indexArray[1] }
+      }
+
+      function clickAction() {
+        coordinate = idIntoCoordinates(this.id)
+        data = {
+          gameId: gameId,
+          rowIndex: coordinate.rowIndex,
+          colIndex: coordinate.colIndex,
+        }
+        $.get("/target", data, function (data, status) {
+          if (data.won) {
+            alert("You lucy guy just won the game!")
+            drawGameBoard(data.gameBoard, true)
+          } else if (data.lost) {
+            alert("You lost the game")
+            drawGameBoard(data.gameBoard, true)
+          } else drawGameBoard(data.gameBoard, false)
+        })
+      }
+
+      function drawGameTable() {
+        const gameTable = document.getElementById("gametable")
+        gameTable.style.border = "border: 1px solid black"
+        gameTable.style.borderCollapse = "collapse"
+
+        for (let i = 0; i < 10; i++) {
+          const row = gameTable.insertRow(i)
+
+          for (let j = 0; j < 10; j++) {
+            const cell = row.insertCell(j)
+            cell.style.width = "50px"
+            cell.style.height = "50px"
+            cell.style.textAlign = "center"
+            cell.style.border = "1px solid #0000FF"
+            cell.id = i + ":" + j
+          }
+        }
+      }
+
+      function setControlPanel() {
+        controlPanel = document.getElementById("control")
+        const playButton = document.createElement("button")
+        playButton.id = "startbutton"
+        playButton.innerHTML = "Blay"
+        control.appendChild(playButton)
+      }
+
+      window.onload = function () {
+        drawGameTable()
+        setControlPanel()
+        button = document.getElementById("startbutton").onclick = startGame
+      }
+    </script>
+  </body>
+</html>
